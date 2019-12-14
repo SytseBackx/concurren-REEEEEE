@@ -30,6 +30,18 @@ main = do
   -- Let a seperate thread listen for incomming connections
   _ <- forkIO $ listenForConnections serverSocket
 
+
+
+
+
+  -- Prints the first RT 
+  _ <- printRT (generateOwnRT me (me:neighbours))
+
+
+
+
+  
+  threadDelay 1000000
   -- As an example, connect to the first neighbour. This just
   -- serves as an example on using the network functions in Haskell
   case neighbours of
@@ -43,6 +55,12 @@ main = do
       -- Use `hPutStrLn chandle` instead of `putStrLn`,
       -- and `hGetLine  chandle` instead of `getLine`.
       -- You can close a connection with `hClose chandle`.
+      
+
+      --
+
+
+
       hPutStrLn chandle $ "Hi process " ++ show neighbour ++ "! I'm process " ++ show me ++ " and you are my first neighbour."
       putStrLn "I sent a message to the neighbour"
       message <- hGetLine chandle
@@ -87,3 +105,17 @@ handleConnection connection = do
   message <- hGetLine chandle
   putStrLn $ "Incomming connection send a message: " ++ message
   hClose chandle
+
+
+generateOwnRT :: Int -> [Int] -> [Int]
+generateOwnRT _ []           = []
+generateOwnRT ownPort (p:ps) | p == ownPort = p : 0 : 0 : generateOwnRT ownPort (ps)
+                             | otherwise = p : 1 : p : generateOwnRT ownPort (ps)
+
+printRT :: [Int] -> IO()
+printRT (destination:steps:via:xs) = do
+  if via == 0
+    then putStrLn $ show destination ++ " " ++ show steps ++ " local"
+    else putStrLn $ show destination ++ " " ++ show steps ++ " " ++ show via
+  printRT (xs)
+  return ()
