@@ -31,7 +31,7 @@ main = do
   _ <- forkIO $ listenForConnections serverSocket
 
 
-
+  putStrLn $ show (updateRT [1,0,0,2,1,2,3,2,2,4,3,3] [4,1,4,5,1,5] [1,0,0,2,1,2,3,2,2,4,3,3] 2)
 
 
   -- Prints the first RT 
@@ -108,29 +108,27 @@ generateOwnRT ownPort (p:ps) | p == ownPort = p : 0 : 0 : generateOwnRT ownPort 
                              | otherwise = p : 1 : p : generateOwnRT ownPort (ps)
 
 
---updateRT :: [Int] -> [Int] -> [Int] -> [Int]
---updateRT [] [] = []
--- Als ie leeg is, moet die dus worden toegevoegd
+updateRT :: [Int] -> [Int] -> [Int] -> Int -> [Int]
+updateRT _                          []                                 original _      = 
+  original
 
-updateRT :: [Int] -> [Int] -> [Int] -> [Int]
-updateRT _ [] original = original
+updateRT []                         (receivedD:receivedS:receivedV:ys) original sender =
+  updateRT (original ++ receivedD:(receivedS + 1):sender:[]) ys (original ++ receivedD:(receivedS + 1):sender:[]) sender
 
-updateRT []                         (receivedD:receivedS:receivedV:ys) original =
-  updateRT (original ++ receivedD:receivedS:receivedV:[]) ys (original ++ receivedD:receivedS:receivedV:[])
-
-updateRT (destination:steps:via:xs) current@(receivedD:receivedS:receivedV:ys) original =
-  if 1==1
-    then updateRT newOriginal ys newOriginal
-    else updateRT xs current original
-      where newOriginal = updateThisRecord receivedD receivedS receivedV original
-
-
-
+updateRT (destination:steps:via:xs) (receivedD:receivedS:receivedV:ys) original sender =
+  if destination == receivedD
+    then if steps > (receivedS + 1)
+      then updateRT newOriginal ys newOriginal sender
+      else updateRT original ys original sender
+    else updateRT xs (receivedD:receivedS:receivedV:ys) original sender
+      where newOriginal = updateThisRecord receivedD (receivedS + 1) sender original
+    
 -- stable updater:
 updateThisRecord destination uSteps uVia (z1:z2:z3:zs) =
   if destination == z1
     then destination : uSteps : uVia : zs
     else z1 : z2 : z3 : updateThisRecord destination uSteps uVia zs
+
 
 printRT :: [Int] -> IO()
 printRT (destination:steps:via:xs) = do
