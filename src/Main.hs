@@ -107,6 +107,31 @@ generateOwnRT _ []           = []
 generateOwnRT ownPort (p:ps) | p == ownPort = p : 0 : 0 : generateOwnRT ownPort (ps)
                              | otherwise = p : 1 : p : generateOwnRT ownPort (ps)
 
+
+--updateRT :: [Int] -> [Int] -> [Int] -> [Int]
+--updateRT [] [] = []
+-- Als ie leeg is, moet die dus worden toegevoegd
+
+updateRT :: [Int] -> [Int] -> [Int] -> [Int]
+updateRT _ [] original = original
+
+updateRT []                         (receivedD:receivedS:receivedV:ys) original =
+  updateRT (original ++ receivedD:receivedS:receivedV:[]) ys (original ++ receivedD:receivedS:receivedV:[])
+
+updateRT (destination:steps:via:xs) current@(receivedD:receivedS:receivedV:ys) original =
+  if 1==1
+    then updateRT newOriginal ys newOriginal
+    else updateRT xs current original
+      where newOriginal = updateThisRecord receivedD receivedS receivedV original
+
+
+
+-- stable updater:
+updateThisRecord destination uSteps uVia (z1:z2:z3:zs) =
+  if destination == z1
+    then destination : uSteps : uVia : zs
+    else z1 : z2 : z3 : updateThisRecord destination uSteps uVia zs
+
 printRT :: [Int] -> IO()
 printRT (destination:steps:via:xs) = do
   if via == 0
