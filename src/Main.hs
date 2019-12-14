@@ -35,13 +35,8 @@ main = do
 
 
   -- Prints the first RT 
-  _ <- printRT (generateOwnRT me (me:neighbours))
+  -- _ <- printRT (generateOwnRT me (me:neighbours))
 
-
-
-
-  
-  threadDelay 1000000
   -- As an example, connect to the first neighbour. This just
   -- serves as an example on using the network functions in Haskell
   case neighbours of
@@ -57,11 +52,11 @@ main = do
       -- You can close a connection with `hClose chandle`.
       
 
-      --
 
 
+      --hPutStrLn chandle $ "Hi process " ++ show neighbour ++ "! I'm process " ++ show me ++ " and you are my first neighbour."
+      hPutStrLn chandle $ show (generateOwnRT me (me:neighbours))
 
-      hPutStrLn chandle $ "Hi process " ++ show neighbour ++ "! I'm process " ++ show me ++ " and you are my first neighbour."
       putStrLn "I sent a message to the neighbour"
       message <- hGetLine chandle
       putStrLn $ "Neighbour send a message back: " ++ show message
