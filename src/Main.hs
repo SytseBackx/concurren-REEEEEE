@@ -31,13 +31,6 @@ main = do
   _ <- forkIO $ listenForConnections serverSocket
 
 
-  --putStrLn $ show (updateRT [1,0,0,2,1,2,3,2,2,4,3,3] [4,1,4,5,1,5] [1,0,0,2,1,2,3,2,2,4,3,3] 2)
-  
-
-
-  -- Irritate all neighbours by sending [1,2,3] to everyone!
-  tellEvery1MyNewRTIfUpdated [1,2,3] [2,3] neighbours
-
 
   -- Prints the first RT 
   -- _ <- printRT (generateOwnRT me (me:neighbours))
@@ -106,54 +99,3 @@ handleConnection connection = do
   putStrLn $ "Incomming connection send a message: " ++ message
   hClose chandle
 
-
-generateOwnRT :: Int -> [Int] -> [Int]
-generateOwnRT _ []           = []
-generateOwnRT ownPort (p:ps) | p == ownPort = p : 0 : 0 : generateOwnRT ownPort (ps)
-                             | otherwise = p : 1 : p : generateOwnRT ownPort (ps)
-
-
--- RT Updater, do not touch!
--- Usage: updateRT {ownRT} {receivedRT} {ownRT} {port of the sender}
-updateRT :: [Int] -> [Int] -> [Int] -> Int -> [Int]
-updateRT _                          []                                 original _      = 
-  original
-
-updateRT []                         (receivedD:receivedS:receivedV:ys) original sender =
-  updateRT (original ++ receivedD:(receivedS + 1):sender:[]) ys (original ++ receivedD:(receivedS + 1):sender:[]) sender
-
-updateRT (destination:steps:via:xs) (receivedD:receivedS:receivedV:ys) original sender =
-  if destination == receivedD
-    then if steps > (receivedS + 1)
-      then updateRT newOriginal ys newOriginal sender
-      else updateRT original ys original sender
-    else updateRT xs (receivedD:receivedS:receivedV:ys) original sender
-      where newOriginal = updateThisRecord receivedD (receivedS + 1) sender original
-   
-updateThisRecord destination uSteps uVia (z1:z2:z3:zs) =
-  if destination == z1
-    then destination : uSteps : uVia : zs
-    else z1 : z2 : z3 : updateThisRecord destination uSteps uVia zs
-
-
-tellEvery1MyNewRTIfUpdated :: [Int] -> [Int] -> [Int] -> IO()
-tellEvery1MyNewRTIfUpdated newRT oldRT sendList | newRT == oldRT = return()
-                                                | otherwise = sendNewRT newRT sendList
-
-sendNewRT :: [Int] -> [Int] -> IO()
-sendNewRT _     []     = return ()
-sendNewRT newRT (r:rs) = do
-  client <- connectSocket r
-  chandle <- socketToHandle client ReadWriteMode
-  hPutStrLn chandle $ show (newRT)
-  sendNewRT newRT rs
-  return ()
-
-
-printRT :: [Int] -> IO()
-printRT (destination:steps:via:xs) = do
-  if via == 0
-    then putStrLn $ show destination ++ " " ++ show steps ++ " local"
-    else putStrLn $ show destination ++ " " ++ show steps ++ " " ++ show via
-  printRT (xs)
-  return ()
